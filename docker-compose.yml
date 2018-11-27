@@ -1,0 +1,39 @@
+version: '3'
+services:
+  cassandra1:
+    image: cassandra:latest
+    container_name: cassandra1
+    environment:
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_PASSWORD_SEEDER=yes
+
+# Some internets says that seed need only in next nodes, but it doesn't work in my config.
+# When i removed them on first node, i got ?N state, when use
+# - CASSANDRA_SEEDS=cassandra1 only on next node
+# Because that i provide seeds on all nodes of cluster
+
+      - CASSANDRA_SEEDS=cassandra1,cassandra2
+      - CASSANDRA_PASSWORD=cassandrapassw
+
+    volumes:
+
+# Firstly when i try to mount local config directory into containers, i got error (There is no file). It's because that entrypoint sh scipt use sed firstly on contaier file.
+# Then i got files from container without mount volume and copied to local directory, and it works.
+# Because this i created cassandra.yaml.template and propogate him to mount directories
+#
+# p.s. Some peoples adjusted docker-entrypoit.sh for ability to bind config-file
+
+      - ./cassandra1.config:/etc/cassandra
+      - ./cassandra1.data:/var/lib/cassandra
+
+  cassandra-node2:
+    image: cassandra:latest
+    container_name: cassandra2
+    environment:
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_SEEDS=cassandra1
+      - CASSANDRA_PASSWORD=cassandrapwssw
+    volumes:
+      - ./cassandra2.config:/etc/cassandra
+      - ./cassandra2.data/:/var/lib/cassandra
+
